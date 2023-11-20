@@ -1,0 +1,144 @@
+from cmu_graphics import *
+from stitches import *
+
+def onAppStart(app):
+    app.button = ([(30, 100), (30, 170), (30, 240), (30, 310), (100, 100), 
+                (100, 170), (100, 240), (100, 310)])
+    app.buttonColor = 'white'         
+    app.drawingScreen = True
+    app.selectedButtonIndex = -1
+    app.stitchName = 'stitch displayed here'
+    app.castOn = 'castOn.png'
+    app.dc = 'doubleCrochet.png'
+    app.stitchNames = dict()
+    centerDicts(app)
+
+def redrawAll(app):
+    if app.drawingScreen is True:
+        boardRow(app)
+        drawButtons(app)
+        drawStiches(app)
+        drawTrash(app)
+
+        #draw stitches
+        drawChain(app)
+        drawSlipStich(app)
+
+        #draw curr stich selected
+        drawRect(30,60, 130, 30,fill='white',border='black')
+        drawLabel(f'{app.stitchName}',94, 75, align = 'center')
+
+
+def drawTrash(app):
+    drawRect(30, 380, 130, 30,fill='red',border='black')
+    drawLabel('Trash',94, 395, align = 'center')
+        
+def boardRow(app):
+    for row in range(18):
+        x = 210+row*30
+        for col in range(16):
+            y = 50+col*30
+            drawCircle(x, y, 2, fill = 'grey')
+
+def drawButtons(app):
+    for i in range(len(app.button)):
+        color = app.buttonColor
+        xrect, yrect = app.button[i]
+        if app.selectedButtonIndex == i:
+            color = 'grey'
+        drawRect(xrect,yrect,60,60,fill=color,border='black')   
+
+def getButtonIndex(app, mouseX, mouseY):
+    for i in range(len(app.button)-1, -1, -1):
+        xrect,yrect = app.button[i]
+        x0 = xrect - 9
+        x1 = xrect + 60
+        y0 = yrect - 9
+        y1 = yrect + 60
+        if ((x0 <= mouseX and mouseX <= x1)) and (y0 <=mouseY and mouseY <=y1):
+            return i
+    return None    
+
+def getStitchName(app):
+    app.stitchNames[0] = 'chain'
+    app.stitchNames[1] = 'single crochet' 
+    app.stitchNames[2] = 'double crochet'
+    app.stitchNames[3] = 'cast on'
+    app.stitchNames[4] = 'slip stitch'
+    app.stitchNames[5] = 'half double crochet'        
+    app.stitchNames[6] = 'triple crochet'
+    app.stitchNames[7] = 'cast off'     
+    
+    if app.selectedButtonIndex in app.stitchNames:
+        app.stitchName = app.stitchNames[app.selectedButtonIndex]
+
+def onMousePress(app, mouseX, mouseY):
+    if getButtonIndex(app, mouseX, mouseY) != None: 
+        app.selectedButtonIndex = getButtonIndex(app,mouseX, mouseY)
+
+    chainPress(app, mouseX, mouseY)  
+
+    slipStitchPress(app,mouseX, mouseY)
+          
+    getStitchName(app)
+
+def drawStiches(app): 
+    iW, iH = getImageSize(app.castOn)
+    drawOval(60, 130, 40, 10,rotateAngle = 90, fill = 'white', 
+             borderWidth = 2, border = 'black')
+    drawCircle(130, 130, 5)  
+    drawLine(60, 215, 60, 190)
+    drawLine(50, 202, 70, 202)
+    drawLine(130, 220, 130, 180)
+    drawLine(60, 250,60, 290)
+    drawLine(130, 250,130, 290)
+    drawImage(app.castOn, 60, 340, align = 'center', rotateAngle = -90,
+              width = iW//14, height = iH//14)
+    drawImage(app.castOn, 130, 340, align = 'center', rotateAngle = 90,
+              width = iW//14, height = iH//14)  
+
+
+def onMouseDrag(app, mouseX, mouseY):
+    # Trash Function 
+    if (mouseX >= 30 and mouseX <= 160) and (mouseY >= 380 and mouseY <= 410):
+        if app.selectedButtonIndex == 0:
+            app.chainCenters.pop(app.selectedChainIndex) 
+            app.selectedChainIndex -= 1
+        if app.selectedButtonIndex == 4:
+            app.slipStitchCenters.pop(app.slipStitchCenters[app.selectedSlipStitchIndex])       
+   
+    #drag Function 
+    if app.selectedChainIndex != None:
+        app.selectedSlipStitchIndex = None
+        app.selectedButtonIndex = 0
+        app.chainCenters[app.selectedChainIndex] = (mouseX, mouseY) 
+  
+    elif app.selectedSlipStitchIndex != None:
+        app.selectedChainIndex = None
+        app.selectedButtonIndex = 4
+        app.slipStitchCenters[app.selectedSlipStitchIndex] = (mouseX, mouseY) 
+
+
+    # if getChainIndex(app, mouseX, mouseY) != None:
+    #     print(getChainIndex(app, mouseX, mouseY))
+    #     app.chainCenters[app.selectedChainIndex] = (mouseX, mouseY) 
+    # elif getSlipStitchIndex(app, mouseX, mouseY) != None:
+    #     app.slipStitchCenters[app.selectedSlipStitchIndex] = (mouseX, mouseY)     
+
+
+
+
+def onMouseRelease(app, mouseX, mouseY):
+    app.selectedButtonIndex = -1    
+    # if app.selectedChainIndex != None:
+    #      app.selectedSlipStitchIndex = None
+    # elif app.selectedSlipStitchIndex != None:
+    #     app.selectedChainIndex = None 
+
+def onKeyPress(app, key):
+    pass
+    
+def main():
+  runApp(width=1100, height=560)
+
+main()
